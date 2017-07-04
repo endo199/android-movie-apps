@@ -17,4 +17,4 @@ org.gradle.jvmargs=-Xmx1536m
 # org.gradle.parallel=true
 
 # https://developers.themoviedb.org API KEY
-TMDB_API_KEY = "<Your API KEY Here>"
+TMDB_API_KEY = "<YOUR API KEY>"
