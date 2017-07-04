@@ -3,4 +3,6 @@
     <string name="popularity">Popularity</string>
     <string name="order_by">Order By</string>
     <string name="rating">Rating</string>
+    <string name="mark_as_favorite">Mark as Favorite</string>
+    <string name="trailers">Trailers</string>
 </resources>
