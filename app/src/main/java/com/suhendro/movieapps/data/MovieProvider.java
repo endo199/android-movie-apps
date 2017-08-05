@@ -52,7 +52,6 @@ public class MovieProvider extends ContentProvider {
                 break;
             case MOVIES_FAVORITE:
                 final SQLiteDatabase db = mMovieDbHelper.getReadableDatabase();
-//                cursor = db.query(MovieDbContract.MovieEntry.TABLE_NAME, null, null, null, null, null, MovieDbContract.MovieEntry._ID);
                 cursor = db.query(MovieDbContract.MovieEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
         }

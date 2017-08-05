@@ -116,33 +116,22 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
             return;
         }
 
-        int counter = 1;
-
         result.moveToFirst();
         Movie movie;
         do {
             movie = new Movie();
 
             movie.setId(result.getLong(MovieDbContract.TABLE_COLUMN_MOVIE_ID_IDX));
-            Log.d("XXX", "Favorite movie id "+movie.getId());
-            Log.d("XXX", "Movie id "+result.getLong(result.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID)));
             movie.setPosterUrl(result.getString(MovieDbContract.TABLE_COLUMN_POSTER_IDX));
-            Log.d("XXX", "Favorite poster "+movie.getPosterUrl());
             movie.setRating(result.getFloat(MovieDbContract.TABLE_COLUMN_RATING_IDX));
             movie.setReleaseDate(new Date(result.getLong(MovieDbContract.TABLE_COLUMN_RELEASE_DATE_IDX)));
             movie.setRuntime(result.getInt(MovieDbContract.TABLE_COLUMN_DURATION_IDX));
             movie.setSynopsis(result.getString(MovieDbContract.TABLE_COLUMN_SYNOPSIS_IDX));
             movie.setTitle(result.getString(MovieDbContract.TABLE_COLUMN_TITLE_IDX));
-            Log.d("XXX", "Favorite title "+movie.getTitle());
-
-            Log.d("XXX", "The movie: "+movie.toString());
 
             mMovies.add(movie);
-            Log.d("XXX", "movie added "+(counter++));
         } while(result.moveToNext());
         result.close();
-
-        Log.d("XXX", result.getCount() + "*" + mMovies.size() + " favorite movies");
 
         if(result.getCount() > 0) {
             mLoadingIndicator.setVisibility(View.INVISIBLE);
@@ -236,11 +225,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
 
     @Override
     public void onListItemClick(int index) {
-        // TODO: kirim data yang sudah ada dengan menggunakan Parcelable
-        Long movieId = mMovies.get(index).getId();
+        Movie movie = mMovies.get(index);
 
         Intent intentThatCallMovieDetail = new Intent(getApplicationContext(), DetailActivity.class);
-        intentThatCallMovieDetail.putExtra(Intent.EXTRA_UID, movieId);
+        // basic information about the movie doesn't contain duration of the movie
+        // so, in detail it will fetch again from server to get full detail
+        intentThatCallMovieDetail.putExtra("movieObj", movie);
+
         startActivity(intentThatCallMovieDetail);
     }
 }

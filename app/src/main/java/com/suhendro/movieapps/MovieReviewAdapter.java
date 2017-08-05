@@ -38,13 +38,11 @@ class MovieReviewAdapter extends RecyclerView.Adapter<MovieReviewAdapter.ReviewV
 
     @Override
     public void onBindViewHolder(ReviewViewHolder holder, int position) {
-        Log.d("XXX", "Binding position: "+position+"**"+mReviews.get(position).getAuthor());
         holder.bind(mReviews.get(position));
     }
 
     @Override
     public int getItemCount() {
-        Log.d("XXX", "NumOfReview "+mReviews.size());
         return mReviews.size();
     }
 
@@ -58,7 +56,6 @@ class MovieReviewAdapter extends RecyclerView.Adapter<MovieReviewAdapter.ReviewV
         }
 
         public void bind(Review review) {
-            Log.d("XXX", "Review: "+review.getContent()+" by "+review.getAuthor());
             mDescription.setText(review.getContent());
             mAuthor.setText(review.getAuthor());
         }

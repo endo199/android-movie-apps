@@ -1,5 +1,8 @@
 package com.suhendro.movieapps.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
@@ -8,7 +11,7 @@ import java.util.Date;
  * Created by Suhendro on 6/28/2017.
  */
 
-public class Movie {
+public class Movie implements Parcelable {
 
     private Long id;
     @SerializedName("original_title")
@@ -24,6 +27,15 @@ public class Movie {
     private Integer runtime;
 
     public Movie() {}
+    public Movie(Parcel parcel) {
+        this.id = parcel.readLong();
+        this.title = parcel.readString();
+        this.rating = parcel.readFloat();
+        this.posterUrl = parcel.readString();
+        this.synopsis = parcel.readString();
+        this.runtime = parcel.readInt();
+        this.releaseDate = new Date(parcel.readLong());
+    }
 
     public Long getId() {
         return id;
@@ -85,4 +97,33 @@ public class Movie {
     public String toString() {
         return this.title + "["+this.id+"] with poster "+this.posterUrl;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        parcel.writeLong(this.id);
+        parcel.writeString(this.title);
+        parcel.writeFloat(this.rating);
+        parcel.writeString(this.posterUrl);
+        parcel.writeString(this.synopsis);
+        parcel.writeInt(this.runtime != null ? this.runtime : 0);
+        parcel.writeLong(this.releaseDate.getTime());
+    }
+
+    public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
+
+        @Override
+        public Movie createFromParcel(Parcel parcel) {
+            return new Movie(parcel);
+        }
+
+        @Override
+        public Movie[] newArray(int i) {
+            return new Movie[0];
+        }
+    };
 }

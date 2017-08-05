@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -87,18 +88,14 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         mTrailerList.setHasFixedSize(true);
 
         Intent intentFromCaller = getIntent();
-        if(intentFromCaller.hasExtra(Intent.EXTRA_UID)) {
-            Long movieId = intentFromCaller.getLongExtra(Intent.EXTRA_UID, 0);
+        mMovieDetail = intentFromCaller.getParcelableExtra("movieObj");
+        if(mMovieDetail != null) {
+            showDetail();
+            new MovieTrailerAsync().execute(mMovieDetail.getId());
+            new MovieReviewsAsycnTask().execute(mMovieDetail.getId());
 
-            if(movieId > 0) {
-                AsyncTask<Long, Void, Movie> fetchMovie = new MovieDetailAsyncTask();
-                fetchMovie.execute(movieId);
-
-                new MovieTrailerAsync().execute(movieId);
-                new MovieReviewsAsycnTask().execute(movieId);
-            } else {
-                Log.d("XXX", "Movie id is zero");
-            }
+            // movie duration is not available, so request for detail
+            new MovieDetailAsyncTask().execute(mMovieDetail.getId());
         }
 
         mReviewList = (RecyclerView) findViewById(R.id.rv_movie_reviews);
@@ -116,9 +113,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
     }
 
     public void setFavorite(View view) {
-
-        Log.d("XXX", "Favorite film "+mMovieDetail.getId()+" "+mMovieDetail.getTitle()+" "+mMovieDetail.getPosterUrl());
-
         ContentValues cv = new ContentValues();
         cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID, mMovieDetail.getId());
         cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_TITLE, mMovieDetail.getTitle());
