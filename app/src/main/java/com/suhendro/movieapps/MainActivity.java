@@ -1,22 +1,25 @@
 package com.suhendro.movieapps;
 
+import android.content.ContentUris;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.GridView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.suhendro.movieapps.data.MovieDbContract;
 import com.suhendro.movieapps.model.Movie;
 import com.suhendro.movieapps.utils.NetworkUtils;
 
@@ -28,6 +31,7 @@ import org.json.JSONTokener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.ListItemClickListener {
@@ -48,7 +52,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.i("XXX", "Running");
+        // TODO: fix the title and action menu color, change it into white or template color
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         mLoadingIndicator = (ProgressBar) findViewById(R.id.loading_indicator);
         mErrorDisplay = (TextView) findViewById(R.id.tv_error_display);
@@ -62,18 +68,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
         fetchMoviesData(SORT_BY_POPULARITY);
         mAdapter = new MovieAdapter(mMovies, this);
         mPosterGrid.setAdapter(mAdapter);
-
-//        mPosterGrid.addOnScrollListener(new RecyclerView.OnScrollListener() {
-//            @Override
-//            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-//                super.onScrollStateChanged(recyclerView, newState);
-//                if(newState == RecyclerView.SCROLL_STATE_SETTLING) {
-//                    fetchMoviesData();
-//                }
-//            }
-//        });
-
-        Log.i("XXX", "Selesai");
     }
 
     protected void resetAdapter() {
@@ -101,9 +95,60 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
                 resetAdapter();
                 fetchMoviesData(SORT_BY_RATING);
                 break;
+            case R.id.action_favorite:
+                // TODO: implement show list of movies based on user's favorite
+                resetAdapter();
+                fetchFavoriteMovies();
+                break;
         }
 
         return true;
+    }
+
+    private void fetchFavoriteMovies() {
+        mLoadingIndicator.setVisibility(View.VISIBLE);
+        Uri favoriteMoviesUri = Uri.withAppendedPath(MovieDbContract.MovieEntry.CONTENT_URI, "favorite");
+
+        Cursor result = getContentResolver().query(favoriteMoviesUri, MovieDbContract.TABLE_MOVIE_COLUMNS, null, null, MovieDbContract.MovieEntry._ID);
+        if(result == null || result.getCount() == 0) {
+            mLoadingIndicator.setVisibility(View.INVISIBLE);
+            showErrorMessage("You don't have any favorite movies, yet.");
+            return;
+        }
+
+        int counter = 1;
+
+        result.moveToFirst();
+        Movie movie;
+        do {
+            movie = new Movie();
+
+            movie.setId(result.getLong(MovieDbContract.TABLE_COLUMN_MOVIE_ID_IDX));
+            Log.d("XXX", "Favorite movie id "+movie.getId());
+            Log.d("XXX", "Movie id "+result.getLong(result.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID)));
+            movie.setPosterUrl(result.getString(MovieDbContract.TABLE_COLUMN_POSTER_IDX));
+            Log.d("XXX", "Favorite poster "+movie.getPosterUrl());
+            movie.setRating(result.getFloat(MovieDbContract.TABLE_COLUMN_RATING_IDX));
+            movie.setReleaseDate(new Date(result.getLong(MovieDbContract.TABLE_COLUMN_RELEASE_DATE_IDX)));
+            movie.setRuntime(result.getInt(MovieDbContract.TABLE_COLUMN_DURATION_IDX));
+            movie.setSynopsis(result.getString(MovieDbContract.TABLE_COLUMN_SYNOPSIS_IDX));
+            movie.setTitle(result.getString(MovieDbContract.TABLE_COLUMN_TITLE_IDX));
+            Log.d("XXX", "Favorite title "+movie.getTitle());
+
+            Log.d("XXX", "The movie: "+movie.toString());
+
+            mMovies.add(movie);
+            Log.d("XXX", "movie added "+(counter++));
+        } while(result.moveToNext());
+        result.close();
+
+        Log.d("XXX", result.getCount() + "*" + mMovies.size() + " favorite movies");
+
+        if(result.getCount() > 0) {
+            mLoadingIndicator.setVisibility(View.INVISIBLE);
+            mAdapter.notifyDataSetChanged();
+            showData();
+        }
     }
 
     private void showData() {
@@ -117,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
         mErrorDisplay.setText(errorMsg);
     }
 
+    // TODO: ganti dengan menggunakan retrofit
     private void fetchMoviesData(String sortBy) {
         AsyncTask<String, Void, JSONObject> fetch = new AsyncTask<String, Void, JSONObject>() {
             @Override
@@ -128,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
             @Override
             protected JSONObject doInBackground(String... sorts) {
                 Log.i("XXX", "Fetching data in background");
-                Uri movieDbUrl = NetworkUtils.buildUrl(sorts[0], page);
+                Uri movieDbUrl = NetworkUtils.buildUri(sorts[0], page);
                 String fetchResult = null;
                 try {
                     fetchResult = NetworkUtils.getHttpResponse(new URL(movieDbUrl.toString()));
@@ -190,6 +236,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
 
     @Override
     public void onListItemClick(int index) {
+        // TODO: kirim data yang sudah ada dengan menggunakan Parcelable
         Long movieId = mMovies.get(index).getId();
 
         Intent intentThatCallMovieDetail = new Intent(getApplicationContext(), DetailActivity.class);

@@ -80,4 +80,9 @@ public class Movie {
     public void setRuntime(Integer runtime) {
         this.runtime = runtime;
     }
+
+    @Override
+    public String toString() {
+        return this.title + "["+this.id+"] with poster "+this.posterUrl;
+    }
 }

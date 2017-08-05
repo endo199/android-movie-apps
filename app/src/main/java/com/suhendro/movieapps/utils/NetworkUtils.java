@@ -23,8 +23,7 @@ public class NetworkUtils {
     static final String PARAM_API_KEY = "api_key";
     static final String PARAM_PAGE = "page";
 
-    public static Uri buildUrl(String sortBy, int page) {
-        // TODO: refractor api key
+    public static Uri buildUri(String sortBy, int page) {
         Uri uri = Uri.parse(IMDB_BASE_URL).buildUpon()
                 .path("3/movie/"+sortBy)
                 .appendQueryParameter(PARAM_API_KEY, API_KEY)
@@ -36,8 +35,7 @@ public class NetworkUtils {
         return uri;
     }
 
-    public static Uri buildMovieUrl(Long id) {
-        // TODO: refractor api key
+    public static Uri buildMovieUri(Long id) {
         Uri uri = Uri.parse(IMDB_BASE_URL).buildUpon()
                 .path("3/movie/"+id)
                 .appendQueryParameter(PARAM_API_KEY, API_KEY)
@@ -48,10 +46,20 @@ public class NetworkUtils {
         return uri;
     }
 
-    public static Uri buildMovieTrailerListUrl(Long movieId) {
-        // TODO: refractor api key
+    public static Uri buildMovieTrailerListUri(Long movieId) {
         Uri uri = Uri.parse(IMDB_BASE_URL).buildUpon()
                 .path("3/movie/"+movieId+"/videos")
+                .appendQueryParameter(PARAM_API_KEY, API_KEY)
+                .build();
+
+        Log.i("XXX", "URI: "+uri.toString());
+
+        return uri;
+    }
+
+    public static Uri buildMovieReviewsUri(Long movieId) {
+        Uri uri = Uri.parse(IMDB_BASE_URL).buildUpon()
+                .path("3/movie/"+movieId+"/reviews")
                 .appendQueryParameter(PARAM_API_KEY, API_KEY)
                 .build();
 

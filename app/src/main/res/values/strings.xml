@@ -5,4 +5,6 @@
     <string name="rating">Rating</string>
     <string name="mark_as_favorite">Mark as Favorite</string>
     <string name="trailers">Trailers</string>
+    <string name="favorite">Favorite</string>
+    <string name="reviews">Reviews</string>
 </resources>
