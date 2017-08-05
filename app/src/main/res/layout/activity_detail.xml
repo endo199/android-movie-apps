@@ -108,13 +108,16 @@
                     app:layout_constraintTop_toBottomOf="@+id/tv_movie_duration"
                     tools:text="Rating" />
 
-                <Button
+                <ToggleButton
                     android:id="@+id/tb_mark_favorite"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:button="@android:drawable/btn_star_big_off"
                     android:onClick="setFavorite"
-                    android:text="@string/mark_as_favorite"
+                    android:padding="10dp"
+                    android:textOff="@string/mark_as_favorite"
+                    android:textOn="@string/remove_from_favorite"
                     app:layout_constraintLeft_toLeftOf="@+id/tv_movie_rating"
                     app:layout_constraintTop_toBottomOf="@+id/tv_movie_rating" />
 

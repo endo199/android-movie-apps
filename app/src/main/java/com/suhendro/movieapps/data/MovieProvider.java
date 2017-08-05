@@ -85,8 +85,12 @@ public class MovieProvider extends ContentProvider {
     }
 
     @Override
-    public int delete(@NonNull Uri uri, @Nullable String s, @Nullable String[] strings) {
-        return 0;
+    public int delete(@NonNull Uri uri, @Nullable String where, @Nullable String[] whereArg) {
+        String movieIdStr = uri.getLastPathSegment();
+        Log.d("XXX", "Trying to delete favorite "+movieIdStr);
+
+        final SQLiteDatabase db = mMovieDbHelper.getWritableDatabase();
+        return db.delete(MovieDbContract.MovieEntry.TABLE_NAME, MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID + "=?", new String[]{movieIdStr});
     }
 
     @Override

@@ -1,7 +1,9 @@
 package com.suhendro.movieapps;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,6 +18,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
@@ -46,7 +50,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
     private TextView mSynopsis;
     private TextView mRating;
     private ImageView mPoster;
-    private Button mFavorite;
+    private ToggleButton mFavorite;
 
     private Toolbar mToolbar;
     private ImageView mToolbarBackgroundImg;
@@ -67,6 +71,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         mSynopsis = (TextView) findViewById(R.id.tv_synopsis);
         mRating = (TextView) findViewById(R.id.tv_movie_rating);
         mPoster = (ImageView) findViewById(R.id.iv_poster);
+        mFavorite = (ToggleButton) findViewById(R.id.tb_mark_favorite);
 
         collapsToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapse_toolbar);
 
@@ -108,21 +113,37 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         layoutManager2.setOrientation(LinearLayoutManager.VERTICAL);
         mReviewList.setLayoutManager(layoutManager2);
         mReviewList.setHasFixedSize(true);
-
-        mFavorite = (Button) findViewById(R.id.tb_mark_favorite);
     }
 
     public void setFavorite(View view) {
-        ContentValues cv = new ContentValues();
-        cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID, mMovieDetail.getId());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_TITLE, mMovieDetail.getTitle());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_POSTER, mMovieDetail.getPosterUrl());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_RATING, mMovieDetail.getRating());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_RELEASE_DATE, mMovieDetail.getReleaseDate().getTime());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_SYNOPSIS, mMovieDetail.getSynopsis());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_DURATION, mMovieDetail.getRuntime());
+        if(!mFavorite.isChecked()) {
+            Log.d("XXX", "Deleting from favorite");
+            // remove from favorite
+            Uri deleteItemUri = ContentUris.withAppendedId(MovieDbContract.MovieEntry.CONTENT_URI, mMovieDetail.getId());
+            int result = getContentResolver().delete(deleteItemUri, null, null);
+            if(result > 0) {
+                // success removing from favorite
+                mFavorite.setButtonDrawable(android.R.drawable.star_big_off);
 
-        Uri uri = getContentResolver().insert(MovieDbContract.MovieEntry.CONTENT_URI, cv);
+                Log.d("XXX", "Success deleting from favorite");
+            } else {
+                Toast.makeText(this, "Error removing from favorite", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Log.d("XXX", "Inserting into favorite");
+            // add to favorite
+            ContentValues cv = new ContentValues();
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID, mMovieDetail.getId());
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_TITLE, mMovieDetail.getTitle());
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_POSTER, mMovieDetail.getPosterUrl());
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_RATING, mMovieDetail.getRating());
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_RELEASE_DATE, mMovieDetail.getReleaseDate().getTime());
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_SYNOPSIS, mMovieDetail.getSynopsis());
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_DURATION, mMovieDetail.getRuntime());
+
+            Uri uri = getContentResolver().insert(MovieDbContract.MovieEntry.CONTENT_URI, cv);
+            mFavorite.setButtonDrawable(android.R.drawable.star_big_on);
+        }
     }
 
     private void showDetail() {
@@ -143,6 +164,21 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         Picasso.with(getApplicationContext())
                 .load(mMovieDetail.getPosterUrl())
                 .into(mToolbarBackgroundImg);
+
+
+
+        Cursor searchMovieInFavorite = getContentResolver().query(
+                Uri.withAppendedPath(MovieDbContract.MovieEntry.CONTENT_URI, "favorite"),
+                new String[] {MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID},
+                MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID + "=? ",
+                new String[] {String.valueOf(mMovieDetail.getId())}, null);
+
+        Log.d("XXX", "is in favorite: "+(searchMovieInFavorite != null && searchMovieInFavorite.getCount() > 0));
+        if(searchMovieInFavorite != null && searchMovieInFavorite.getCount() > 0) {
+            mFavorite.setChecked(true);
+            mFavorite.setButtonDrawable(android.R.drawable.star_big_on);
+        }
+        searchMovieInFavorite.close();
     }
 
     @Override
