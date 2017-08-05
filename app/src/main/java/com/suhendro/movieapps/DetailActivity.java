@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -53,6 +54,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
     private MovieReviewAdapter mReviewAdapter;
     private RecyclerView mTrailerList;
     private RecyclerView mReviewList;
+    private CollapsingToolbarLayout collapsToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +66,9 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         mSynopsis = (TextView) findViewById(R.id.tv_synopsis);
         mRating = (TextView) findViewById(R.id.tv_movie_rating);
         mPoster = (ImageView) findViewById(R.id.iv_poster);
+
+        collapsToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapse_toolbar);
+
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mToolbarBackgroundImg = (ImageView) findViewById(R.id.app_bar_image);
 
@@ -127,7 +132,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
     }
 
     private void showDetail() {
-        mToolbar.setTitle(mMovieDetail.getTitle());
+        collapsToolbar.setTitle(mMovieDetail.getTitle());
 
         Calendar cal = Calendar.getInstance();
         cal.setTime(mMovieDetail.getReleaseDate());

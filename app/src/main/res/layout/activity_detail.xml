@@ -13,6 +13,7 @@
         android:fitsSystemWindows="true">
 
         <android.support.design.widget.CollapsingToolbarLayout
+            android:id="@+id/collapse_toolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fitsSystemWindows="true"
@@ -22,7 +23,8 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed|enterAlwaysCollapsed"
             app:layout_scrollInterpolator="@android:anim/decelerate_interpolator"
             app:titleEnabled="true"
-            app:toolbarId="@+id/toolbar">
+            app:toolbarId="@+id/toolbar"
+            tools:title="Title">
 
             <ImageView
                 android:id="@+id/app_bar_image"
@@ -30,9 +32,9 @@
                 android:layout_height="match_parent"
                 android:adjustViewBounds="true"
                 android:scaleType="centerCrop"
-                android:src="@android:drawable/sym_def_app_icon"
                 app:layout_collapseMode="pin"
-                tools:ignore="ContentDescription" />
+                tools:ignore="ContentDescription"
+                tools:src="@android:drawable/ic_menu_report_image" />
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/toolbar"
