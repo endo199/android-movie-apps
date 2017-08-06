@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
@@ -30,9 +31,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -46,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
     private MovieAdapter mAdapter;
     private final int NUM_OF_COLUMN = 2;
     private RecyclerView mPosterGrid;
-    private List<Movie> mMovies = new ArrayList<>();
+    private List<Movie> mMovies = new ArrayList<Movie>();
     private int page = 1;
 
     private ProgressBar mLoadingIndicator;
@@ -85,7 +88,41 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
                 .build();
 
         this.movieService = this.retrofit.create(MovieService.class);
-        retrofitMovieData(SORT_BY_POPULARITY);
+
+        if(savedInstanceState != null) {
+            this.page = savedInstanceState.getInt("page");
+            ArrayList<Movie> restoredMovies = savedInstanceState.getParcelableArrayList("movies");
+            if(restoredMovies != null) {
+                mMovies.addAll(restoredMovies);
+                mAdapter.notifyDataSetChanged();
+            }
+        } else {
+            retrofitMovieData(SORT_BY_POPULARITY);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt("page", this.page);
+        ArrayList<Movie> lMovies = new ArrayList<>(mMovies);
+        outState.putParcelableArrayList("movies", lMovies);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
     }
 
     protected void resetAdapter() {
@@ -145,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
             movie.setRuntime(result.getInt(MovieDbContract.TABLE_COLUMN_DURATION_IDX));
             movie.setSynopsis(result.getString(MovieDbContract.TABLE_COLUMN_SYNOPSIS_IDX));
             movie.setTitle(result.getString(MovieDbContract.TABLE_COLUMN_TITLE_IDX));
+            movie.setBackdropPath(result.getString(MovieDbContract.TABLE_COLUMN_BACKDROP_IDX));
 
             mMovies.add(movie);
         } while(result.moveToNext());
@@ -169,6 +207,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
     }
 
     private void retrofitMovieData(String sortBy) {
+        mLoadingIndicator.setVisibility(View.VISIBLE);
+
+        Log.i("XXX", "Fetching movie data from server");
         Call<MovieList> moviesPromise = this.movieService.getMovies(sortBy, MovieService.API_KEY, page);
         moviesPromise.enqueue(new Callback<MovieList>() {
             @Override
@@ -179,12 +220,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
                         mMovies.add(m);
                     }
                     mAdapter.notifyDataSetChanged();
+                    showData();
+                } else {
+                    showErrorMessage(response.raw().message());
                 }
+
+                mLoadingIndicator.setVisibility(View.INVISIBLE);
             }
 
             @Override
             public void onFailure(Call<MovieList> call, Throwable t) {
                 t.printStackTrace();
+                showErrorMessage("Error connection");
+                mLoadingIndicator.setVisibility(View.INVISIBLE);
             }
         });
     }
