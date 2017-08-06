@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,7 +14,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,9 +22,12 @@ import android.widget.ToggleButton;
 import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 import com.suhendro.movieapps.data.MovieDbContract;
+import com.suhendro.movieapps.data.MovieService;
 import com.suhendro.movieapps.model.Movie;
 import com.suhendro.movieapps.model.Review;
+import com.suhendro.movieapps.model.ReviewList;
 import com.suhendro.movieapps.model.Trailer;
+import com.suhendro.movieapps.model.TrailerList;
 import com.suhendro.movieapps.utils.NetworkUtils;
 
 import org.json.JSONArray;
@@ -34,11 +35,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DetailActivity extends AppCompatActivity implements MovieTrailerAdapter.TrailerOnClickListener {
     private Movie mMovieDetail;
@@ -61,6 +70,9 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
     private RecyclerView mReviewList;
     private CollapsingToolbarLayout collapsToolbar;
 
+    private Retrofit retrofit;
+    private MovieService movieService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +85,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         mPoster = (ImageView) findViewById(R.id.iv_poster);
         mFavorite = (ToggleButton) findViewById(R.id.tb_mark_favorite);
 
+        // TODO: fix up arrow hilang ketika toolbar collapse
         collapsToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapse_toolbar);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -92,17 +105,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         mTrailerList.setLayoutManager(layoutManager);
         mTrailerList.setHasFixedSize(true);
 
-        Intent intentFromCaller = getIntent();
-        mMovieDetail = intentFromCaller.getParcelableExtra("movieObj");
-        if(mMovieDetail != null) {
-            showDetail();
-            new MovieTrailerAsync().execute(mMovieDetail.getId());
-            new MovieReviewsAsycnTask().execute(mMovieDetail.getId());
-
-            // movie duration is not available, so request for detail
-            new MovieDetailAsyncTask().execute(mMovieDetail.getId());
-        }
-
         mReviewList = (RecyclerView) findViewById(R.id.rv_movie_reviews);
         mReviewList.setNestedScrollingEnabled(true);
 
@@ -113,6 +115,94 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         layoutManager2.setOrientation(LinearLayoutManager.VERTICAL);
         mReviewList.setLayoutManager(layoutManager2);
         mReviewList.setHasFixedSize(true);
+
+        this.retrofit = new Retrofit.Builder()
+                .baseUrl(MovieService.IMDB_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        this.movieService = this.retrofit.create(MovieService.class);
+
+        Intent intentFromCaller = getIntent();
+        mMovieDetail = intentFromCaller.getParcelableExtra("movieObj");
+        if(mMovieDetail != null) {
+            showDetail();
+//            new MovieTrailerAsync().execute(mMovieDetail.getId());
+            Call<TrailerList> tmp = this.movieService.getMovieVideos(mMovieDetail.getId(), MovieService.API_KEY);
+            tmp.enqueue(new Callback<TrailerList>() {
+                @Override
+                public void onResponse(Call<TrailerList> call, Response<TrailerList> response) {
+                    if(response.isSuccessful()) {
+                        List<Trailer> trailerList = Arrays.asList(response.body().getTrailers());
+                        mMovieTrailers.addAll(trailerList);
+                        mTrailerAdapter.notifyDataSetChanged();
+                    } else {
+                        try {
+                            Log.e("XXX", response.errorBody().string());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<TrailerList> call, Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+
+
+//            new MovieReviewsAsycnTask().execute(mMovieDetail.getId());
+            Call<ReviewList> movieReview = this.movieService.getMovieReviews(mMovieDetail.getId(), MovieService.API_KEY, 1);
+            movieReview.enqueue(new Callback<ReviewList>() {
+                @Override
+                public void onResponse(Call<ReviewList> call, Response<ReviewList> response) {
+                    if(response.isSuccessful()) {
+                        List<Review> reviewList = Arrays.asList(response.body().getReviews());
+                        mMovieReviews.addAll(reviewList);
+                        mReviewAdapter.notifyDataSetChanged();
+                    } else {
+                        Log.e("XXX", "Error "+response.raw().message());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ReviewList> call, Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+
+            // movie duration is not available, so request for detail
+//            new MovieDetailAsyncTask().execute(mMovieDetail.getId());
+            if(mMovieDetail.getRuntime() == null || mMovieDetail.getRuntime() == 0) {
+                Call<Movie> detail = this.movieService.getMovieDetail(mMovieDetail.getId(), MovieService.API_KEY);
+                detail.enqueue(new Callback<Movie>() {
+                    @Override
+                    public void onResponse(Call<Movie> call, Response<Movie> response) {
+                        if (response.isSuccessful()) {
+                            mMovieDetail = response.body();
+                            mMovieDetail.setPosterUrl("http://image.tmdb.org/t/p/w500" + mMovieDetail.getPosterUrl());
+                            mMovieDetail.setBackdropPath("http://image.tmdb.org/t/p/w500" + mMovieDetail.getBackdropPath());
+                            Log.d("XXX", "Movie detail loaded part 2: " + mMovieDetail.toString());
+                            showDetail();
+                        } else {
+                            Log.e("XXX", "Error getting movie's detail " + response.errorBody().toString());
+                            try {
+                                Log.e("XXX", "Error getting movie's detail " + response.errorBody().string());
+                            } catch (IOException e) {
+                                Log.e("XXX", "Error getting detail movie");
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Movie> call, Throwable t) {
+                        t.printStackTrace();
+                    }
+                });
+            }
+        }
     }
 
     public void setFavorite(View view) {
@@ -162,7 +252,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
                 .into(mPoster);
 
         Picasso.with(getApplicationContext())
-                .load(mMovieDetail.getPosterUrl())
+                .load(mMovieDetail.getBackdropPath())
                 .into(mToolbarBackgroundImg);
 
 

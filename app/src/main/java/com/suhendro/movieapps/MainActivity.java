@@ -20,7 +20,9 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.suhendro.movieapps.data.MovieDbContract;
+import com.suhendro.movieapps.data.MovieService;
 import com.suhendro.movieapps.model.Movie;
+import com.suhendro.movieapps.model.MovieList;
 import com.suhendro.movieapps.utils.NetworkUtils;
 
 import org.json.JSONArray;
@@ -34,6 +36,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class MainActivity extends AppCompatActivity implements MovieAdapter.ListItemClickListener {
     private MovieAdapter mAdapter;
     private final int NUM_OF_COLUMN = 2;
@@ -46,6 +54,9 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
 
     private final String SORT_BY_POPULARITY = "popular";
     private final String SORT_BY_RATING = "top_rated";
+
+    private Retrofit retrofit;
+    private MovieService movieService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +76,16 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, NUM_OF_COLUMN);
         mPosterGrid.setLayoutManager(gridLayoutManager);
 
-        fetchMoviesData(SORT_BY_POPULARITY);
         mAdapter = new MovieAdapter(mMovies, this);
         mPosterGrid.setAdapter(mAdapter);
+
+        this.retrofit = new Retrofit.Builder()
+                .baseUrl(MovieService.IMDB_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        this.movieService = this.retrofit.create(MovieService.class);
+        retrofitMovieData(SORT_BY_POPULARITY);
     }
 
     protected void resetAdapter() {
@@ -89,14 +107,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
         switch (id) {
             case R.id.action_order_popularity:
                 resetAdapter();
-                fetchMoviesData(SORT_BY_POPULARITY);
+                retrofitMovieData(SORT_BY_POPULARITY);
                 break;
             case R.id.action_order_rating:
                 resetAdapter();
-                fetchMoviesData(SORT_BY_RATING);
+                retrofitMovieData(SORT_BY_RATING);
                 break;
             case R.id.action_favorite:
-                // TODO: implement show list of movies based on user's favorite
                 resetAdapter();
                 fetchFavoriteMovies();
                 break;
@@ -151,76 +168,25 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
         mErrorDisplay.setText(errorMsg);
     }
 
-    // TODO: ganti dengan menggunakan retrofit
-    private void fetchMoviesData(String sortBy) {
-        AsyncTask<String, Void, JSONObject> fetch = new AsyncTask<String, Void, JSONObject>() {
+    private void retrofitMovieData(String sortBy) {
+        Call<MovieList> moviesPromise = this.movieService.getMovies(sortBy, MovieService.API_KEY, page);
+        moviesPromise.enqueue(new Callback<MovieList>() {
             @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                mLoadingIndicator.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            protected JSONObject doInBackground(String... sorts) {
-                Log.i("XXX", "Fetching data in background");
-                Uri movieDbUrl = NetworkUtils.buildUri(sorts[0], page);
-                String fetchResult = null;
-                try {
-                    fetchResult = NetworkUtils.getHttpResponse(new URL(movieDbUrl.toString()));
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                    Log.e("XXX", "URL Format exception");
-                    showErrorMessage("URL Format exception");
-
-                    return null;
-                }
-
-                if(fetchResult != null) {
-                    try {
-                        JSONObject json = (JSONObject) new JSONTokener(fetchResult).nextValue();
-                        return json;
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.e("XXX", "Error parsing JSON String");
-                        showErrorMessage("Error parsing JSON String");
-                    }
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(JSONObject jsonObject) {
-                if(jsonObject == null) {
-                    mLoadingIndicator.setVisibility(View.INVISIBLE);
-                    Log.d("XXX", "No data");
-                    return;
-                }
-
-                try {
-                    Gson gson = new Gson();
-                    JSONArray moviesJson = jsonObject.getJSONArray("results");
-                    Movie tmp;
-                    for(int i = 0; i < moviesJson.length(); i++) {
-                        tmp = gson.fromJson(moviesJson.getJSONObject(i).toString(), Movie.class);
-                        tmp.setPosterUrl("http://image.tmdb.org/t/p/w500"+tmp.getPosterUrl());
-                        mMovies.add(tmp);
+            public void onResponse(Call<MovieList> call, Response<MovieList> response) {
+                if(response.isSuccessful()) {
+                    for (Movie m : response.body().getResults()) {
+                        m.setPosterUrl("http://image.tmdb.org/t/p/w500"+m.getPosterUrl());
+                        mMovies.add(m);
                     }
                     mAdapter.notifyDataSetChanged();
-                    showData();
-
-                    // increment page to show next page
-                    page++;
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    showErrorMessage("Error processing movies data");
-                } finally {
-                    mLoadingIndicator.setVisibility(View.INVISIBLE);
                 }
             }
-        };
 
-        fetch.execute(sortBy);
+            @Override
+            public void onFailure(Call<MovieList> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
     }
 
     @Override
