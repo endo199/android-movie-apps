@@ -38,12 +38,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ImageViewHol
 
         LayoutInflater inflater = LayoutInflater.from(context);
         View view = inflater.inflate(R.layout.recycler_item, parent, shouldAttachToParentImmediately);
-//        view.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Log.i("XXX", "clicked....");
-//            }
-//        });
 
         return new ImageViewHolder(view);
     }
@@ -55,7 +49,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ImageViewHol
 
     @Override
     public int getItemCount() {
-        Log.i("XXX", "item count: "+movies.size());
         return movies.size();
     }
 
