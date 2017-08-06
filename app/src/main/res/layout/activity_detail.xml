@@ -62,49 +62,44 @@
 
                 <ImageView
                     android:id="@+id/iv_poster"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_marginBottom="8dp"
-                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
                     android:adjustViewBounds="true"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toLeftOf="@+id/tb_mark_favorite"
                     app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.0"
                     app:srcCompat="@android:drawable/ic_menu_report_image"
-                    tools:ignore="ContentDescription" />
+                    tools:ignore="ContentDescription"
+                    android:layout_marginLeft="8dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    android:layout_marginEnd="8dp"
+                    app:layout_constraintHorizontal_bias="1.0" />
 
                 <TextView
                     android:id="@+id/tv_release_date"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="0dp"
                     android:textSize="24sp"
                     android:textStyle="bold"
-                    app:layout_constraintLeft_toRightOf="@+id/iv_poster"
+                    app:layout_constraintLeft_toLeftOf="@+id/tb_mark_favorite"
                     app:layout_constraintTop_toTopOf="@+id/iv_poster"
                     tools:text="Release Date" />
-
-                <TextView
-                    android:id="@+id/tv_movie_duration"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    app:layout_constraintLeft_toLeftOf="@+id/tv_release_date"
-                    app:layout_constraintTop_toBottomOf="@+id/tv_release_date"
-                    tools:text="Duration" />
 
                 <TextView
                     android:id="@+id/tv_movie_rating"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    app:layout_constraintLeft_toLeftOf="@+id/tv_movie_duration"
-                    app:layout_constraintTop_toBottomOf="@+id/tv_movie_duration"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:layout_constraintLeft_toLeftOf="@+id/tb_mark_favorite"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_release_date"
                     tools:text="Rating" />
 
                 <ToggleButton
@@ -118,8 +113,10 @@
                     android:padding="10dp"
                     android:textOff="@string/mark_as_favorite"
                     android:textOn="@string/remove_from_favorite"
-                    app:layout_constraintLeft_toLeftOf="@+id/tv_movie_rating"
-                    app:layout_constraintTop_toBottomOf="@+id/tv_movie_rating" />
+                    app:layout_constraintTop_toBottomOf="@+id/tv_movie_rating"
+                    android:layout_marginRight="7dp"
+                    app:layout_constraintRight_toRightOf="parent"
+                    android:layout_marginEnd="8dp" />
 
             </android.support.constraint.ConstraintLayout>
 

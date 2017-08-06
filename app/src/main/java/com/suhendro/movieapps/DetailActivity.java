@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +18,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 import com.suhendro.movieapps.data.MovieDbContract;
 import com.suhendro.movieapps.data.MovieService;
@@ -28,16 +26,8 @@ import com.suhendro.movieapps.model.Review;
 import com.suhendro.movieapps.model.ReviewList;
 import com.suhendro.movieapps.model.Trailer;
 import com.suhendro.movieapps.model.TrailerList;
-import com.suhendro.movieapps.utils.NetworkUtils;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -55,7 +45,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
     private List<Review> mMovieReviews = new ArrayList<>();
 
     private TextView mRelease;
-    private TextView mDuration;
     private TextView mSynopsis;
     private TextView mRating;
     private ImageView mPoster;
@@ -79,7 +68,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         setContentView(R.layout.activity_detail);
 
         mRelease = (TextView) findViewById(R.id.tv_release_date);
-        mDuration = (TextView) findViewById(R.id.tv_movie_duration);
         mSynopsis = (TextView) findViewById(R.id.tv_synopsis);
         mRating = (TextView) findViewById(R.id.tv_movie_rating);
         mPoster = (ImageView) findViewById(R.id.iv_poster);
@@ -168,36 +156,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
                     t.printStackTrace();
                 }
             });
-
-            // movie duration is not available, so request for detail
-            if(mMovieDetail.getRuntime() == null || mMovieDetail.getRuntime() == 0) {
-                Call<Movie> detail = this.movieService.getMovieDetail(mMovieDetail.getId(), MovieService.API_KEY);
-                detail.enqueue(new Callback<Movie>() {
-                    @Override
-                    public void onResponse(Call<Movie> call, Response<Movie> response) {
-                        if (response.isSuccessful()) {
-                            mMovieDetail = response.body();
-                            mMovieDetail.setPosterUrl("http://image.tmdb.org/t/p/w500" + mMovieDetail.getPosterUrl());
-                            mMovieDetail.setBackdropPath("http://image.tmdb.org/t/p/w500" + mMovieDetail.getBackdropPath());
-                            Log.d("XXX", "Movie detail loaded part 2: " + mMovieDetail.toString());
-                            showDetail();
-                        } else {
-                            Log.e("XXX", "Error getting movie's detail " + response.errorBody().toString());
-                            try {
-                                Log.e("XXX", "Error getting movie's detail " + response.errorBody().string());
-                            } catch (IOException e) {
-                                Log.e("XXX", "Error getting detail movie");
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<Movie> call, Throwable t) {
-                        t.printStackTrace();
-                    }
-                });
-            }
         }
     }
 
@@ -238,7 +196,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         cal.setTime(mMovieDetail.getReleaseDate());
 
         mRelease.setText(""+cal.get(Calendar.YEAR));
-        mDuration.setText(mMovieDetail.getRuntime()+" mins");
         mSynopsis.setText(mMovieDetail.getSynopsis());
         mRating.setText(mMovieDetail.getRating() + "/10");
 
@@ -247,7 +204,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
                 .into(mPoster);
 
         Picasso.with(getApplicationContext())
-                .load(mMovieDetail.getBackdropPath())
+                .load(mMovieDetail.getPosterUrl())
                 .into(mToolbarBackgroundImg);
 
         Cursor searchMovieInFavorite = getContentResolver().query(
