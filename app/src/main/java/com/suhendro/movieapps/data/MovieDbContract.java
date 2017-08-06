@@ -19,7 +19,8 @@ public final class MovieDbContract {
             MovieEntry.COLUMN_NAME_SYNOPSIS,
             MovieEntry.COLUMN_NAME_RATING,
             MovieEntry.COLUMN_NAME_RELEASE_DATE,
-            MovieEntry.COLUMN_NAME_DURATION
+            MovieEntry.COLUMN_NAME_DURATION,
+            MovieEntry.COLUMN_NAME_BACKDROP
     };
     public static final int TABLE_COLUMN_MOVIE_ID_IDX = 0;
     public static final int TABLE_COLUMN_POSTER_IDX = 1;
@@ -28,6 +29,7 @@ public final class MovieDbContract {
     public static final int TABLE_COLUMN_RATING_IDX = 4;
     public static final int TABLE_COLUMN_RELEASE_DATE_IDX = 5;
     public static final int TABLE_COLUMN_DURATION_IDX = 6;
+    public static final int TABLE_COLUMN_BACKDROP_IDX = 7;
 
 
     public static class MovieEntry implements BaseColumns {
@@ -44,5 +46,6 @@ public final class MovieDbContract {
         public static final String COLUMN_NAME_RATING = "rating";
         public static final String COLUMN_NAME_RELEASE_DATE = "release";
         public static final String COLUMN_NAME_DURATION = "duration";
+        public static final String COLUMN_NAME_BACKDROP = "backdrop";
     }
 }

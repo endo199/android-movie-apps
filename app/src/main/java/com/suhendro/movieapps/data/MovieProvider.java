@@ -17,15 +17,11 @@ import android.util.Log;
  */
 
 public class MovieProvider extends ContentProvider {
-    public static final int MOVIES = 100;
-    public static final int MOVIES_DETAIL = 101;
     public static final int MOVIES_FAVORITE = 200;
 
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
-//        sUriMatcher.addURI(MovieDbContract.AUTHORITY, MovieDbContract.PATH_MOVIES, MOVIES);
         sUriMatcher.addURI(MovieDbContract.AUTHORITY, MovieDbContract.PATH_MOVIES + "/favorite", MOVIES_FAVORITE);
-//        sUriMatcher.addURI(MovieDbContract.AUTHORITY, MovieDbContract.PATH_MOVIES+"/#", MOVIES_DETAIL);
     }
 
     private MovieDbHelper mMovieDbHelper;
@@ -46,10 +42,6 @@ public class MovieProvider extends ContentProvider {
         Cursor cursor = null;
 
         switch (matchCode) {
-            case MOVIES:
-                break;
-            case MOVIES_DETAIL:
-                break;
             case MOVIES_FAVORITE:
                 final SQLiteDatabase db = mMovieDbHelper.getReadableDatabase();
                 cursor = db.query(MovieDbContract.MovieEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
@@ -90,7 +82,13 @@ public class MovieProvider extends ContentProvider {
         Log.d("XXX", "Trying to delete favorite "+movieIdStr);
 
         final SQLiteDatabase db = mMovieDbHelper.getWritableDatabase();
-        return db.delete(MovieDbContract.MovieEntry.TABLE_NAME, MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID + "=?", new String[]{movieIdStr});
+        int numOfDeleted = db.delete(MovieDbContract.MovieEntry.TABLE_NAME, MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID + "=?", new String[]{movieIdStr});
+        if(numOfDeleted != 0) {
+            Log.d("XXX", "Notify changes cause of delete");
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return numOfDeleted;
     }
 
     @Override

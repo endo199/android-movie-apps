@@ -212,9 +212,9 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
             Uri deleteItemUri = ContentUris.withAppendedId(MovieDbContract.MovieEntry.CONTENT_URI, mMovieDetail.getId());
             int result = getContentResolver().delete(deleteItemUri, null, null);
             if(result > 0) {
-                // success removing from favorite
-                mFavorite.setButtonDrawable(android.R.drawable.star_big_off);
-
+//                // success removing from favorite
+                mFavorite.setButtonDrawable(android.R.drawable.btn_star_big_off);
+//
                 Log.d("XXX", "Success deleting from favorite");
             } else {
                 Toast.makeText(this, "Error removing from favorite", Toast.LENGTH_SHORT).show();
@@ -226,13 +226,14 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
             cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID, mMovieDetail.getId());
             cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_TITLE, mMovieDetail.getTitle());
             cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_POSTER, mMovieDetail.getPosterUrl());
+            cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_BACKDROP, mMovieDetail.getBackdropPath());
             cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_RATING, mMovieDetail.getRating());
             cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_RELEASE_DATE, mMovieDetail.getReleaseDate().getTime());
             cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_SYNOPSIS, mMovieDetail.getSynopsis());
             cv.put(MovieDbContract.MovieEntry.COLUMN_NAME_DURATION, mMovieDetail.getRuntime());
 
             Uri uri = getContentResolver().insert(MovieDbContract.MovieEntry.CONTENT_URI, cv);
-            mFavorite.setButtonDrawable(android.R.drawable.star_big_on);
+            mFavorite.setButtonDrawable(android.R.drawable.btn_star_big_on);
         }
     }
 

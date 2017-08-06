@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
 
     private Retrofit retrofit;
     private MovieService movieService;
+    private boolean isFavorite = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,11 +91,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
         this.movieService = this.retrofit.create(MovieService.class);
 
         if(savedInstanceState != null) {
-            this.page = savedInstanceState.getInt("page");
-            ArrayList<Movie> restoredMovies = savedInstanceState.getParcelableArrayList("movies");
-            if(restoredMovies != null) {
-                mMovies.addAll(restoredMovies);
-                mAdapter.notifyDataSetChanged();
+            Log.i("XXX", "Using saved data");
+
+            this.isFavorite = savedInstanceState.getBoolean("favorite", false);
+
+            if(this.isFavorite) {
+                fetchFavoriteMovies();
+            } else {
+                this.page = savedInstanceState.getInt("page");
+                ArrayList<Movie> restoredMovies = savedInstanceState.getParcelableArrayList("movies");
+                if (restoredMovies != null) {
+                    mMovies.addAll(restoredMovies);
+                    mAdapter.notifyDataSetChanged();
+                }
             }
         } else {
             retrofitMovieData(SORT_BY_POPULARITY);
@@ -102,22 +111,26 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-    }
+    protected void onResume() {
+        super.onResume();
 
-    @Override
-    protected void onRestart() {
-        super.onRestart();
+        if(isFavorite) {
+            resetAdapter();
+            fetchFavoriteMovies();
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putInt("page", this.page);
-        ArrayList<Movie> lMovies = new ArrayList<>(mMovies);
-        outState.putParcelableArrayList("movies", lMovies);
+        if(isFavorite) {
+            outState.putBoolean("favorite", isFavorite);
+        } else {
+            outState.putInt("page", this.page);
+            ArrayList<Movie> lMovies = new ArrayList<>(mMovies);
+            outState.putParcelableArrayList("movies", lMovies);
+        }
     }
 
     @Override
@@ -143,14 +156,17 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
 
         switch (id) {
             case R.id.action_order_popularity:
+                isFavorite = false;
                 resetAdapter();
                 retrofitMovieData(SORT_BY_POPULARITY);
                 break;
             case R.id.action_order_rating:
+                isFavorite = false;
                 resetAdapter();
                 retrofitMovieData(SORT_BY_RATING);
                 break;
             case R.id.action_favorite:
+                isFavorite = true;
                 resetAdapter();
                 fetchFavoriteMovies();
                 break;
@@ -160,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.List
     }
 
     private void fetchFavoriteMovies() {
+        Log.i("XXX", "Fetching favorite movies");
         mLoadingIndicator.setVisibility(View.VISIBLE);
         Uri favoriteMoviesUri = Uri.withAppendedPath(MovieDbContract.MovieEntry.CONTENT_URI, "favorite");
 
