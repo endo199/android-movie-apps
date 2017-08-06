@@ -85,7 +85,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         mPoster = (ImageView) findViewById(R.id.iv_poster);
         mFavorite = (ToggleButton) findViewById(R.id.tb_mark_favorite);
 
-        // TODO: fix up arrow hilang ketika toolbar collapse
         collapsToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapse_toolbar);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -127,7 +126,7 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         mMovieDetail = intentFromCaller.getParcelableExtra("movieObj");
         if(mMovieDetail != null) {
             showDetail();
-//            new MovieTrailerAsync().execute(mMovieDetail.getId());
+
             Call<TrailerList> tmp = this.movieService.getMovieVideos(mMovieDetail.getId(), MovieService.API_KEY);
             tmp.enqueue(new Callback<TrailerList>() {
                 @Override
@@ -151,8 +150,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
                 }
             });
 
-
-//            new MovieReviewsAsycnTask().execute(mMovieDetail.getId());
             Call<ReviewList> movieReview = this.movieService.getMovieReviews(mMovieDetail.getId(), MovieService.API_KEY, 1);
             movieReview.enqueue(new Callback<ReviewList>() {
                 @Override
@@ -173,7 +170,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
             });
 
             // movie duration is not available, so request for detail
-//            new MovieDetailAsyncTask().execute(mMovieDetail.getId());
             if(mMovieDetail.getRuntime() == null || mMovieDetail.getRuntime() == 0) {
                 Call<Movie> detail = this.movieService.getMovieDetail(mMovieDetail.getId(), MovieService.API_KEY);
                 detail.enqueue(new Callback<Movie>() {
@@ -212,10 +208,8 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
             Uri deleteItemUri = ContentUris.withAppendedId(MovieDbContract.MovieEntry.CONTENT_URI, mMovieDetail.getId());
             int result = getContentResolver().delete(deleteItemUri, null, null);
             if(result > 0) {
-//                // success removing from favorite
+                // success removing from favorite
                 mFavorite.setButtonDrawable(android.R.drawable.btn_star_big_off);
-//
-                Log.d("XXX", "Success deleting from favorite");
             } else {
                 Toast.makeText(this, "Error removing from favorite", Toast.LENGTH_SHORT).show();
             }
@@ -256,15 +250,12 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
                 .load(mMovieDetail.getBackdropPath())
                 .into(mToolbarBackgroundImg);
 
-
-
         Cursor searchMovieInFavorite = getContentResolver().query(
                 Uri.withAppendedPath(MovieDbContract.MovieEntry.CONTENT_URI, "favorite"),
                 new String[] {MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID},
                 MovieDbContract.MovieEntry.COLUMN_NAME_MOVIE_ID + "=? ",
                 new String[] {String.valueOf(mMovieDetail.getId())}, null);
 
-        Log.d("XXX", "is in favorite: "+(searchMovieInFavorite != null && searchMovieInFavorite.getCount() > 0));
         if(searchMovieInFavorite != null && searchMovieInFavorite.getCount() > 0) {
             mFavorite.setChecked(true);
             mFavorite.setButtonDrawable(android.R.drawable.star_big_on);
@@ -280,135 +271,6 @@ public class DetailActivity extends AppCompatActivity implements MovieTrailerAda
         intentToPlayTrailer.setData(Uri.parse("https://www.youtube.com/watch?v="+trailer.getKey()));
         if(intentToPlayTrailer.resolveActivity(getPackageManager()) != null) {
             startActivity(intentToPlayTrailer);
-        }
-    }
-
-    class MovieDetailAsyncTask extends AsyncTask<Long, Void, Movie> {
-
-        @Override
-        protected Movie doInBackground(Long... movieIds) {
-            Uri movieUri = NetworkUtils.buildMovieUri(movieIds[0]);
-            URL movieUrl;
-            try {
-                movieUrl = new URL(movieUri.toString());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return null;
-            }
-
-            String response = NetworkUtils.getHttpResponse(movieUrl);
-            if(response != null) {
-                Gson gson = new Gson();
-                Movie movie = gson.fromJson(response, Movie.class);
-                movie.setPosterUrl("http://image.tmdb.org/t/p/w500"+movie.getPosterUrl());
-
-                return movie;
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Movie movie) {
-            super.onPostExecute(movie);
-            mMovieDetail = movie;
-
-            showDetail();
-        }
-    }
-
-    class MovieTrailerAsync extends AsyncTask<Long, Void, List<Trailer>> {
-
-        @Override
-        protected List<Trailer> doInBackground(Long... movieIds) {
-            Uri trailerUri = NetworkUtils.buildMovieTrailerListUri(movieIds[0]);
-            URL trailerUrl;
-            try {
-                trailerUrl = new URL(trailerUri.toString());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return null;
-            }
-
-            String response = NetworkUtils.getHttpResponse(trailerUrl);
-            if(response != null) {
-                try {
-                    JSONObject jsonObj = (JSONObject) new JSONTokener(response).nextValue();
-                    JSONArray trailerListJson = jsonObj.getJSONArray("results");
-
-                    List<Trailer> trailers = new ArrayList<>();
-                    Gson gson = new Gson();
-                    Trailer tmp;
-                    JSONObject obj;
-                    for(int i = 0; i < trailerListJson.length(); i++) {
-                        obj = (JSONObject) trailerListJson.get(i);
-                        tmp = gson.fromJson(obj.toString(), Trailer.class);
-                        trailers.add(tmp);
-                    }
-
-                    return trailers;
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<Trailer> trailers) {
-            if(trailers != null && trailers.size() > 0) {
-                mMovieTrailers.addAll(trailers);
-                mTrailerAdapter.notifyDataSetChanged();
-            }
-        }
-    }
-
-    class MovieReviewsAsycnTask extends AsyncTask<Long, Void, List<Review>> {
-
-        @Override
-        protected List<Review> doInBackground(Long... longs) {
-            Uri uri = NetworkUtils.buildMovieReviewsUri(longs[0]);
-            URL reviewsUrl;
-            try {
-                reviewsUrl = new URL(uri.toString());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return null;
-            }
-
-            String reviews = NetworkUtils.getHttpResponse(reviewsUrl);
-            if(reviews != null) {
-                try {
-                    JSONObject jsonObj = (JSONObject) new JSONTokener(reviews).nextValue();
-                    JSONArray trailerListJson = jsonObj.getJSONArray("results");
-
-                    List<Review> reviewList = new ArrayList<>();
-                    Gson gson = new Gson();
-                    Review tmp;
-                    JSONObject obj;
-                    for(int i = 0; i < trailerListJson.length(); i++) {
-                        obj = (JSONObject) trailerListJson.get(i);
-                        tmp = gson.fromJson(obj.toString(), Review.class);
-                        reviewList.add(tmp);
-                    }
-
-                    return reviewList;
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<Review> reviews) {
-            super.onPostExecute(reviews);
-            if(reviews != null && reviews.size() > 0) {
-                mMovieReviews.addAll(reviews);
-                mReviewAdapter.notifyDataSetChanged();
-            }
         }
     }
 }

@@ -14,7 +14,6 @@
         android:background="?attr/colorPrimary"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
-        app:titleTextColor="@android:color/white"
         tools:title="Apps Title" />
 
     <FrameLayout
